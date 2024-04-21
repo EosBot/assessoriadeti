@@ -4,9 +4,6 @@ services:
     hostname: 'rabbitmq'
     image: rabbitmq:3-management-alpine
     container_name: 'rabbitmq'
-    environment:
-      - RABBITMQ_DEFAULT_USER=admin
-      - RABBITMQ_DEFAULT_PASS=Xv34h32m@
     restart: always
     ports:
         - "5672:5671"   # forced TLS AMQP

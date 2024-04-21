@@ -1,0 +1,5 @@
+docker exec -it [container] bash
+rabbitmqctl add_user "admin"
+rabbitmqctl set_user_tags admin administrator
+rabbitmqctl set_permissions -p / admin ".*" ".*" ".*"
+rabbitmqctl change_password admin xv34h32m
