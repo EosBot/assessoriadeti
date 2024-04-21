@@ -1,0 +1,21 @@
+# Use this compose with traefik proxy manager
+version: '3'
+services:
+  evolution-manager:
+    image: "gabrielpastori1/evolution-manager:latest"
+    ports:
+      - "9615:9615"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.evolution-manager.service=evolution-manager
+      - traefik.http.services.evolution-manager.loadbalancer.server.port=9615
+      - traefik.http.routers.evolution-manager.rule=Host(`manager.eosbot.com.br`)
+      - traefik.http.routers.evolution-manager.entrypoints=websecure
+      - traefik.http.routers.evolution-manager.tls.certresolver=cloudflare
+      - traefik.http.middlewares.manager-auth.basicauth.users=thalis:$$apr1$$jpZ/bm5p$$RF/nSINH4gdPjsS0UdlxL.
+      - traefik.http.routers.evolution-manager.middlewares=manager-auth
+    networks:
+      - portainer_default
+networks:
+  portainer_default:
+    external: true

@@ -1,0 +1,46 @@
+version: "3.8"
+services:
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=xv34h32m
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - portainer_default
+    ports:
+      - "27017:27017"
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=root
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=xv34h32m
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=xv34h1m1
+    depends_on:
+      - mongodb
+    networks:
+      - portainer_default
+    ports:
+      - "8081:8081"
+    labels:
+       - "traefik.enable=true"
+       - "traefik.http.routers.mongodb.rule=Host(`mongo.eosbot.com.br`)"
+       - "traefik.http.services.mongodb.loadbalancer.server.port=8081"
+       - "traefik.http.routers.mongodb.service=mongodb"
+       - "traefik.http.routers.mongodb.entrypoints=websecure"
+       - "traefik.http.routers.mongodb.tls.certresolver=cloudflare"
+
+volumes:
+  mongodb-data:
+    driver: local
+
+networks:
+  portainer_default:
+    external: true

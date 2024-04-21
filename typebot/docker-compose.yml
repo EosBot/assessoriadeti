@@ -1,0 +1,118 @@
+version: '3.8'
+services:
+  typebot-db:
+    image: postgres:13
+    restart: always
+    volumes:
+      - typebot_db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: typebot
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: xv34h32m
+    networks:
+      - portainer_default
+
+  typebot-builder:
+    image: baptistearno/typebot-builder:latest
+    restart: always
+    depends_on:
+      - typebot-db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.typebot-builder.rule=Host(`painel.eosbot.com.br`)" # Troque pelo seu dominio ou subdominio
+      - "traefik.http.routers.typebot-builder.entrypoints=websecure"
+      - "traefik.http.routers.typebot-builder.tls.certresolver=cloudflare"
+    environment:
+      - DATABASE_URL=postgresql://root:xv34h32m@typebot-db:5432/typebot # Se voce mudou a senha ou o nome do banco mude esta linha seguindo este padrao DATABASE_URL=postgresql://postgres:Senha@typebot-db:5432/Nome do Banco de Dados NÃO USE ESPACOS
+      - NEXTAUTH_URL=https://painel.eosbot.com.br # Troque pelo seu dominio ou subdominio
+      - NEXT_PUBLIC_VIEWER_URL=https://bot.eosbot.com.br # Troque pelo seu dominio ou subdominio
+      - ENCRYPTION_SECRET=K+Bar660Ofaec7v1jHC25tAn3l2b7c81
+      - ADMIN_EMAIL=eosbot@outlook.com.br # Troque pelo seu email
+      - DISABLE_SIGNUP=true
+      - SMTP_AUTH_DISABLED=false
+      - SMTP_SECURE=true # Troque para false seu nao usar a porta 465 ou se estiver enfretando problemas no login
+      - SMTP_HOST=smtp.hostinger.com # Troque pelo seu SMTP USE SOMENTE DOMINIO PROPRIETARIOS
+      - SMTP_PORT=465 # altere aqui se nescessario portas comuns 25, 587, 465, 2525
+      - SMTP_USERNAME=suporte@eosbot.com.br # Troque pelo seu email
+      - SMTP_PASSWORD=Xv34h32m@ # Troque pela sua senha
+      - NEXT_PUBLIC_SMTP_FROM=suporte@eosbot.com.br # Troque pelo seu email
+      - S3_ACCESS_KEY=X42YLKLIXI2U0RXWWFJH # Troque se necessario
+      - S3_SECRET_KEY=l9zbNI6LVvlXBTn8m8Rg15BQUSCftQK1kE6ZGJeW # Troque se necessario
+      - S3_BUCKET=typebot
+      - S3_ENDPOINT=storage.eosbot.com.br # Troque pelo seu dominio ou subdominio
+    networks:
+      - portainer_default
+
+  typebot-viewer:
+    image: baptistearno/typebot-viewer:latest
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.typebot-viewer.rule=Host(`bot.eosbot.com.br`)" # Troque pelo seu dominio ou subdominio
+      - "traefik.http.routers.typebot-viewer.entrypoints=websecure"
+      - "traefik.http.routers.typebot-viewer.tls.certresolver=cloudflare"
+    environment:
+      - DATABASE_URL=postgresql://root:xv34h32m@typebot-db:5432/typebot # Se voce mudou a senha ou o nome do banco mude esta linha seguindo este padrao DATABASE_URL=postgresql://postgres:Senha@typebot-db:5432/Nome do Banco de Dados NÃO USE ESPACOS
+      - NEXTAUTH_URL=https://painel.eosbot.com.br # Troque pelo seu dominio ou subdominio
+      - NEXT_PUBLIC_VIEWER_URL=https://bot.eosbot.com.br # Troque pelo seu dominio ou subdominio
+      - ENCRYPTION_SECRET=K+Bar660Ofaec7v1jHC25tAn3l2b7c81
+      - SMTP_HOST=smtp.hostinger.com # Troque pelo seu SMTP USE SOMENTE DOMINIO PROPRIETARIOS
+      - NEXT_PUBLIC_SMTP_FROM=suporte@eosbot.com.br # Troque pelo seu email
+      - S3_ACCESS_KEY=X42YLKLIXI2U0RXWWFJH # Troque se necessario - Deve ser Igual ao Declarado no Typebot Builder S3_ACCESS_KEY=
+      - S3_SECRET_KEY=l9zbNI6LVvlXBTn8m8Rg15BQUSCftQK1kE6ZGJeW # Troque se necessario - Deve ser Igual ao Declarado no Typebot Builder S3_SECRET_KEY=
+      - S3_BUCKET=typebot
+      - S3_ENDPOINT=storage.eosbot.com.br # Troque pelo seu dominio ou subdominio
+    networks:
+      - portainer_default
+
+  mail:
+    image: bytemark/smtp
+    restart: always
+    networks:
+      - portainer_default
+
+  minio:
+    image: minio/minio
+    restart: always
+    command: server /data
+    ports:
+      - '9000:9000'
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.minio.rule=Host(`storage.eosbot.com.br`)" # Troque pelo seu dominio ou subdominio
+
+      - "traefik.http.routers.minio.entrypoints=web,websecure"
+      - "traefik.http.routers.minio.tls.certresolver=cloudflare"
+    environment:
+      MINIO_ROOT_USER: X42YLKLIXI2U0RXWWFJH # Troque se necessario - Deve ser Igual ao Declarado no Typebot Builder S3_ACCESS_KEY=
+      MINIO_ROOT_PASSWORD: l9zbNI6LVvlXBTn8m8Rg15BQUSCftQK1kE6ZGJeW # Troque se necessario - Deve ser Igual ao Declarado no Typebot Builder S3_SECRET_KEY=
+    volumes:
+      - typebot_s3_data:/data
+    networks:
+      - portainer_default
+
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 10;
+      /usr/bin/mc config host add minio http://minio:9000 X42YLKLIXI2U0RXWWFJH l9zbNI6LVvlXBTn8m8Rg15BQUSCftQK1kE6ZGJeW;
+      /usr/bin/mc mb minio/typebot;
+      /usr/bin/mc anonymous set public minio/typebot/public;
+      /usr/bin/mc mb minio/chatwoot;
+      /usr/bin/mc anonymous set public minio/chatwoot/public;
+      exit 0;
+      "
+    networks:
+      - portainer_default
+
+volumes:
+  typebot_db_data:
+  typebot_s3_data:
+
+networks:
+  portainer_default:
+    external: true
