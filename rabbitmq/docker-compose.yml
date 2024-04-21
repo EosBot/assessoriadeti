@@ -16,6 +16,8 @@ services:
       - "traefik.http.routers.rabbitmq.rule=Host(`rabbitmq.eosbot.com.br`)"
       - "traefik.http.routers.rabbitmq.entrypoints=web, websecure"
       - "traefik.http.routers.rabbitmq.tls.certresolver=cloudflare"
+#      - "traefik.http.middlewares.rabbitmq-auth.basicauth.users=thalis:$$apr1$$jpZ/bm5p$$RF/nSINH4gdPjsS0UdlxL."
+#      - "traefik.http.routers.rabbitmq.middlewares=rabbitmq-auth"
     volumes:
       - ./data:/var/lib/rabbitmq/
       - .root/rabbitmq/certs/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
