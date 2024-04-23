@@ -84,5 +84,5 @@ volumes:
   portainer_data:
 
 networks:
-  web:
+  portainer_default:
     external: true

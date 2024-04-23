@@ -36,6 +36,8 @@ services:
        - "traefik.http.routers.mongodb.service=mongodb"
        - "traefik.http.routers.mongodb.entrypoints=websecure"
        - "traefik.http.routers.mongodb.tls.certresolver=cloudflare"
+#       - "traefik.http.middlewares.mongodb-auth.basicauth.users=thalis:$$apr1$$jpZ/bm5p$$RF/nSINH4gdPjsS0UdlxL."
+#       - "traefik.http.routers.mongodb.middlewares=mongodb-auth"
 
 volumes:
   mongodb-data:

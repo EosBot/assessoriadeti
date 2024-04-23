@@ -1,0 +1,103 @@
+version: '3'
+
+networks:
+  portainer_default:
+    external: true
+
+services:
+  mysitewordpress:
+    build:
+      # call the Dockerfile in ./wordpress
+      context: ./wordpress
+    restart: always
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    env_file:
+      - ./.env
+    environment:
+      # Connect WordPress to the database
+      WORDPRESS_DB_HOST: mysitedb:3306
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
+      # Configure Redis connection
+      WORDPRESS_REDIS_HOST: redis
+      WORDPRESS_REDIS_PORT: "6379"
+      WORDPRESS_REDIS_PASSWORD: ${REDIS_PASSWORD}
+    volumes:
+      - ./wordpress/data:/var/www/html
+    networks:
+      - portainer_default
+    depends_on:
+      - mysitedb
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=portainer_default"
+      - "traefik.http.routers.wordpressmysite.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.wordpressmysite.entrypoints=web"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.wordpressmysite.middlewares=redirect-to-https@docker"
+      - "traefik.http.routers.wordpressmysite-secured.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.wordpressmysite-secured.entrypoints=websecure"
+      - "traefik.http.routers.wordpressmysite-secured.tls=true"
+      - "traefik.http.routers.wordpressmysite-secured.tls.certresolver=cloudflare"
+
+  # The MySQL database
+  mysitedb:
+    image: mysql:5.7
+    restart: always
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    env_file:
+      - ./.env
+    environment:
+      MYSQL_DATABASE: ${WORDPRESS_DB_NAME}
+      MYSQL_USER: ${WORDPRESS_DB_USER}
+      MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - ./db:/var/lib/mysql
+    networks:
+      - portainer_default
+
+  # Graphical interface to the database
+  # Can be useful for debug
+  mysitephpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    networks:
+      - portainer_default
+    depends_on:
+      - mysitedb
+    restart: always
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    env_file:
+      - ./.env
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=mysitedb
+      - PMA_PORT=3306
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "8000:80"
+    volumes:
+     - /sessions
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=portainer_default"
+      - "traefik.http.services.phpmyadminmysite.loadbalancer.server.port=80"
+      - "traefik.http.routers.phpmyadminmysite.rule=Host(`${PHPMYADMIN_DOMAIN}`)"
+      - "traefik.http.routers.phpmyadminmysite.entrypoints=web"      
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.phpmyadminmysite.middlewares=redirect-to-https@docker"
+      - "traefik.http.routers.phpmyadminmysite-secured.rule=Host(`${PHPMYADMIN_DOMAIN}`)"
+      - "traefik.http.routers.phpmyadminmysite-secured.entrypoints=websecure"
+      - "traefik.http.routers.phpmyadminmysite-secured.tls=true"
+      - "traefik.http.routers.phpmyadminmysite-secured.tls.certresolver=cloudflare"
+
