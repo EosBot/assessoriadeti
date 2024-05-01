@@ -13,7 +13,7 @@ services:
     <<: *base
     restart: always
     depends_on:
-      - postgres
+      - postgres_chatwoot
       - redis
     ports:
       - '127.0.0.1:3000:3000'
@@ -37,7 +37,7 @@ services:
     <<: *base
     restart: always
     depends_on:
-      - postgres
+      - postgres_chatwoot
       - redis
     environment:
       - NODE_ENV=production
@@ -45,7 +45,7 @@ services:
       - INSTALLATION_ENV=docker
     command: ['bundle', 'exec', 'sidekiq', '-C', 'config/sidekiq.yml']
 
-  postgres:
+  postgres_chatwoot:
     image: postgres:12
     restart: always
     ports:
@@ -55,7 +55,7 @@ services:
     environment:
       - POSTGRES_DB=chatwoot
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=Xv34h32m@
+      - POSTGRES_PASSWORD=xv34h32m
     networks:
       - portainer_default
 
