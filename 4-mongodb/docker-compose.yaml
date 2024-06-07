@@ -1,0 +1,38 @@
+version: '3.7'
+services:
+  mongodb:
+    image: 'mongo:latest'
+    command: mongod --port 27017
+    networks:
+      - traefik
+    volumes:
+      - 'mongodb_data:/data/db'
+      - 'mongodb_configdb_data:/data/configdb'
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=cUT5A9s6dwQe
+      - PUID=1000
+      - PGID=1000
+    ports:
+      - '27017:27017'
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1024M
+volumes:
+  mongodb_data:
+    external: true
+    name: mongodb_data
+  mongodb_configdb_data:
+    external: true
+    name: mongodb_configdb_data
+networks:
+  traefik:
+    name: traefik
+    external: true

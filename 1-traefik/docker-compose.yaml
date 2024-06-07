@@ -1,0 +1,77 @@
+version: "3.7"
+services:
+  traefik:
+    image: traefik:latest
+    command:
+      - --providers.docker.endpoint=unix:///var/run/docker.sock
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --api.insecure=false
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=traefik
+      - --api.dashboard=true
+      - --api.debug=true
+      - --log=true
+      - --log.level=ERROR
+      - --entrypoints.websecure.http.tls.domains[0].main=eosbotdev.online # mudar para eosbot.com.br
+      - --entrypoints.websecure.http.tls.domains[0].sans=*.eosbotdev.online # mudar para eosbot.com.br
+      - --certificatesresolvers.cloudflare.acme.email=thalis224@hotmail.com # mudar para eosbot@outlook.com.br
+      - --certificatesresolvers.cloudflare.acme.dnschallenge=true
+      - --certificatesresolvers.cloudflare.acme.dnschallenge.delaybeforecheck=0
+      - --certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare
+      - --certificatesresolvers.cloudflare.acme.dnschallenge.resolvers[0]=1.1.1.1:53
+      - --certificatesresolvers.cloudflare.acme.dnschallenge.resolvers[1]=8.8.8.8:53
+      - --certificatesresolvers.cloudflare.acme.caServer=https://acme-v02.api.letsencrypt.org/directory
+      - --certificatesresolvers.cloudflare.acme.storage=/etc/traefik/letsencrypt/acme.json
+      - --experimental.plugins.plugin-log4shell.modulename=github.com/traefik/plugin-log4shell
+      - --experimental.plugins.plugin-log4shell.version=v0.1.2
+    environment:
+      - CLOUDFLARE_EMAIL=thalis224@hotmail.com # alterar para eosbot@outlook.com.br
+      - CLOUDFLARE_API_KEY=2b260dd313ac42e4d0546c1e08331c65809a1 #alerar para api key da conta
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    labels:
+      - "traefik.enable=true"
+      - "traefik.network=web"
+      - "traefik.port=8080"
+      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
+      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.eosbotdev.online`)" #traefik.eosbot.com.br
+      - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
+      - "traefik.http.routers.traefik-dashboard.service=api@internal"
+      - "traefik.http.routers.traefik-dashboard.tls.certresolver=cloudflare"
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=thalis:$$apr1$$jpZ/bm5p$$RF/nSINH4gdPjsS0UdlxL."
+      - "traefik.http.routers.traefik-dashboard.middlewares=traefik-auth"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "vol_certificates:/etc/traefik/letsencrypt"
+    ports:
+      - target: 8080
+        published: 8080
+        mode: host
+      - target: 80
+        published: 80
+        mode: host
+      - target: 443
+        published: 443
+        mode: host
+    networks:
+      - traefik
+
+volumes:
+  vol_shared:
+    external: true
+    name: volume_swarm_shared
+  vol_certificates:
+    external: true
+    name: volume_swarm_certificates
+
+networks:
+  traefik:
+    external: true
+    name: traefik
