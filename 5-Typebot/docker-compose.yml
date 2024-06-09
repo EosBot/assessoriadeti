@@ -1,0 +1,150 @@
+version: '3.8'
+services:
+  typebot-builder:
+    image: baptistearno/typebot-builder:latest
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.typebot-builder.rule=Host(`construtor.eosbot.com.br`)" # Troque pelo seu domínio ou subdomínio
+      - "traefik.http.routers.typebot-builder.entrypoints=websecure"
+      - "traefik.http.routers.typebot-builder.tls.certresolver=cloudflare"
+    environment:
+      - DATABASE_URL=postgresql://postgres:i4PPAa20EqN7@postgres:5432/typebot # Troque conforme necessário
+      - NEXTAUTH_URL=https://construtor.eosbot.com.br # Troque pelo seu domínio ou subdomínio
+      - NEXT_PUBLIC_VIEWER_URL=https://bot.eosbot.com.br # Troque pelo seu domínio ou subdomínio
+      - ENCRYPTION_SECRET=K+Bar660Ofaec7v1jHC25tAn3l2b7c81
+      - ADMIN_EMAIL=eosbot@outlook.com.br # Troque pelo seu e-mail
+      - DISABLE_SIGNUP=true
+      - SMTP_AUTH_DISABLED=false
+      - SMTP_SECURE=true # Troque para false se não usar a porta 465 ou se estiver enfrentando problemas no login
+      - SMTP_HOST=smtp.hostinger.com # Troque pelo seu SMTP
+      - SMTP_PORT=465 # Altere se necessário (portas comuns: 25, 587, 465, 2525)
+      - SMTP_USERNAME=suporte@eosbot.com.br  # Troque pelo seu e-mail
+      - SMTP_PASSWORD=Xv34h32m@ # Troque pela sua senha
+      - NEXT_PUBLIC_SMTP_FROM=suporte@eosbot.com.br # Troque pelo seu e-mail
+      - S3_ACCESS_KEY=X42YLKLIXI2U0RXWWFJH # Troque se necessário
+      - S3_SECRET_KEY=l9zbNI6LVvlXBTn8m8Rg15BQUSCftQK1kE6ZGJeW # Troque se necessário
+      - S3_BUCKET=typebot
+      - S3_ENDPOINT=storage.eosbot.com.br # Troque pelo seu domínio ou subdomínio
+    networks:
+      - traefik
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2048M
+
+  typebot-viewer:
+    image: baptistearno/typebot-viewer:latest
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.typebot-viewer.rule=Host(`bot.eosbot.com.br`)" # Troque pelo seu domínio ou subdomínio
+      - "traefik.http.routers.typebot-viewer.entrypoints=websecure"
+      - "traefik.http.routers.typebot-viewer.tls.certresolver=cloudflare"
+    environment:
+      - DATABASE_URL=postgresql://postgres:i4PPAa20EqN7@postgres:5432/typebot # Troque conforme necessário
+      - NEXTAUTH_URL=https://construtor.eosbot.com.br # Troque pelo seu domínio ou subdomínio
+      - NEXT_PUBLIC_VIEWER_URL=https://bot.eosbot.com.br # Troque pelo seu domínio ou subdomínio
+      - ENCRYPTION_SECRET=K+Bar660Ofaec7v1jHC25tAn3l2b7c81
+      - SMTP_HOST=smtp.hostinger.com # Troque pelo seu SMTP
+      - NEXT_PUBLIC_SMTP_FROM=suporte@eosbot.com.br # Troque pelo seu e-mail
+      - S3_ACCESS_KEY=X42YLKLIXI2U0RXWWFJH # Troque se necessário
+      - S3_SECRET_KEY=l9zbNI6LVvlXBTn8m8Rg15BQUSCftQK1kE6ZGJeW # Troque se necessário
+      - S3_BUCKET=typebot
+      - S3_ENDPOINT=storage.eosbot.com.br # Troque pelo seu domínio ou subdomínio
+    networks:
+      - traefik
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2048M
+
+  mail:
+    image: bytemark/smtp
+    networks:
+      - traefik
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2048M
+
+  minio:
+    image: minio/minio
+    command: server /data
+    ports:
+      - '9005:9000'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.minio.rule=Host(`storage.eosbot.com.br`)" # Troque pelo seu domínio ou subdomínio
+      - "traefik.http.routers.minio.entrypoints=web,websecure"
+      - "traefik.http.routers.minio.tls.certresolver=cloudflare"
+    environment:
+      - MINIO_ROOT_USER=X42YLKLIXI2U0RXWWFJH # Troque se necessário
+      - MINIO_ROOT_PASSWORD=l9zbNI6LVvlXBTn8m8Rg15BQUSCftQK1kE6ZGJeW # Troque se necessário
+    volumes:
+      - typebot_s3_data:/data
+    networks:
+      - traefik
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2048M
+
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 10;
+      /usr/bin/mc config host add minio https://storage.eosbot.com.br X42YLKLIXI2U0RXWWFJH l9zbNI6LVvlXBTn8m8Rg15BQUSCftQK1kE6ZGJeW;
+      /usr/bin/mc mb minio/typebot;
+      /usr/bin/mc anonymous set public minio/typebot/public;
+      /usr/bin/mc mb minio/chatwoot;
+      /usr/bin/mc anonymous set public minio/chatwoot/public;
+      exit 0;
+      "
+    networks:
+      - traefik
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2048M
+
+volumes:
+  typebot_s3_data:
+    external: true
+    name: typebot_s3_data
+
+networks:
+  traefik:
+    external: true
+    name: traefik

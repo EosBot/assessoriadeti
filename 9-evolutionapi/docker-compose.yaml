@@ -1,8 +1,7 @@
 version: "3.7"
 services:
   evolution_eosbot:
-    image: atendai/evolution-api:v1.7.0
-    container_name: evolution_eosbot
+    image: atendai/evolution-api:latest
     command: ["node", "./dist/src/main.js"]
     networks:
       - traefik
@@ -10,33 +9,51 @@ services:
       - evolution_eosbot_instances:/evolution/instances
       - evolution_eosbot_store:/evolution/store
     environment:
-      - SERVER_URL=https://api.eosbotdev.online
-      - DOCKER_ENV=true
+      - SERVER_URL=https://api.eosbot.com.br
+      - CORS_ORIGIN=*
+      - CORS_METHODS=POST,GET,PUT,DELETE
+      - CORS_CREDENTIALS=true
       - LOG_LEVEL=ERROR,WARN,DEBUG,INFO,LOG,VERBOSE,DARK,WEBHOOKS
+      - LOG_COLOR=true
+      - LOG_BAILEYS=error
       - DEL_INSTANCE=false
-      - CONFIG_SESSION_PHONE_CLIENT=EosBot
-      - CONFIG_SESSION_PHONE_NAME=Chrome
+      - DEL_TEMP_INSTANCES=false
       - STORE_MESSAGES=true
       - STORE_MESSAGE_UP=true
       - STORE_CONTACTS=true
       - STORE_CHATS=true
-      - CLEAN_STORE_CLEANING_INTERVAL=7200 # seconds === 2h
+      - CLEAN_STORE_CLEANING_INTERVAL=7200
       - CLEAN_STORE_MESSAGES=true
       - CLEAN_STORE_MESSAGE_UP=true
       - CLEAN_STORE_CONTACTS=true
       - CLEAN_STORE_CHATS=true
-      - AUTHENTICATION_TYPE=apikey
-      - AUTHENTICATION_API_KEY=b45db89a9f853402af79da49a518d8fe
-      - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
-      - QRCODE_LIMIT=30
+      - DATABASE_ENABLED=true
+      - DATABASE_CONNECTION_URI=mongodb://admin:cUT5A9s6dwQe@mongodb:27017/?authSource=admin&readPreference=primary&ssl=false&directConnection=true
+      - DATABASE_CONNECTION_DB_PREFIX_NAME=evdocker
+      - DATABASE_SAVE_DATA_INSTANCE=true
+      - DATABASE_SAVE_DATA_NEW_MESSAGE=true
+      - DATABASE_SAVE_MESSAGE_UPDATE=true
+      - DATABASE_SAVE_DATA_CONTACTS=true
+      - DATABASE_SAVE_DATA_CHATS=true
+      - REDIS_ENABLED=true
+      - REDIS_URI=redis://redis:Xv34h32m@:6379
+      - REDIS_PREFIX_KEY=evdocker
+      - RABBITMQ_ENABLED=true
+      - RABBITMQ_RABBITMQ_MODE=global
+      - RABBITMQ_EXCHANGE_NAME=evolution_exchange
+      - RABBITMQ_URI=amqp://evolution:xv34h32m@rabbitmq:5672
+      - WEBSOCKET_ENABLED=false
+      - WEBSOCKET_GLOBAL_EVENTS=false
+      - WEBHOOK_GLOBAL_URL=''
       - WEBHOOK_GLOBAL_ENABLED=false
-      - WEBHOOK_GLOBAL_URL=https://URL
       - WEBHOOK_GLOBAL_WEBHOOK_BY_EVENTS=false
       - WEBHOOK_EVENTS_APPLICATION_STARTUP=false
       - WEBHOOK_EVENTS_QRCODE_UPDATED=true
-      - WEBHOOK_EVENTS_MESSAGES_SET=false
+      - WEBHOOK_EVENTS_MESSAGES_SET=true
       - WEBHOOK_EVENTS_MESSAGES_UPSERT=true
       - WEBHOOK_EVENTS_MESSAGES_UPDATE=true
+      - WEBHOOK_EVENTS_MESSAGES_DELETE=true
+      - WEBHOOK_EVENTS_SEND_MESSAGE=true
       - WEBHOOK_EVENTS_CONTACTS_SET=true
       - WEBHOOK_EVENTS_CONTACTS_UPSERT=true
       - WEBHOOK_EVENTS_CONTACTS_UPDATE=true
@@ -49,20 +66,31 @@ services:
       - WEBHOOK_EVENTS_GROUPS_UPDATE=true
       - WEBHOOK_EVENTS_GROUP_PARTICIPANTS_UPDATE=true
       - WEBHOOK_EVENTS_CONNECTION_UPDATE=true
-      - REDIS_ENABLED=true
-      - REDIS_URI=redis://redis:6379
-      # Permanent data storage
-      - DATABASE_ENABLED=true
-      - DATABASE_CONNECTION_URI=mongodb://admin:cUT5A9s6dwQe@mongodb:27017/?authSource=admin&readPreference=primary&ssl=false&directConnection=true
-      - DATABASE_CONNECTION_DB_PREFIX_NAME=evo
-      # Choose the data you want to save in the application's database or store
-      - DATABASE_SAVE_DATA_INSTANCE=true
-      - DATABASE_SAVE_DATA_NEW_MESSAGE=true
-      - DATABASE_SAVE_MESSAGE_UPDATE=true
-      - DATABASE_SAVE_DATA_CONTACTS=true
-      - DATABASE_SAVE_DATA_CHATS=true
-      - RABBITMQ_ENABLED=false
-      - RABBITMQ_URI=amqp://guest:guest@rabbitmq:5672
+      - WEBHOOK_EVENTS_LABELS_EDIT=true
+      - WEBHOOK_EVENTS_LABELS_ASSOCIATION=true
+      - WEBHOOK_EVENTS_CALL=true
+      - WEBHOOK_EVENTS_NEW_JWT_TOKEN=false
+      - WEBHOOK_EVENTS_TYPEBOT_START=false
+      - WEBHOOK_EVENTS_TYPEBOT_CHANGE_STATUS=false
+      - WEBHOOK_EVENTS_CHAMA_AI_ACTION=false
+      - WEBHOOK_EVENTS_ERRORS=false
+      - WEBHOOK_EVENTS_ERRORS_WEBHOOK=
+      - CONFIG_SESSION_PHONE_CLIENT=EosBot
+      - CONFIG_SESSION_PHONE_NAME=Chrome
+      - QRCODE_LIMIT=90
+      - QRCODE_COLOR=#198754
+      - TYPEBOT_API_VERSION=latest
+      - TYPEBOT_KEEP_OPEN=true
+      - CHATWOOT_MESSAGE_DELETE=true
+      - CHATWOOT_MESSAGE_READ=true
+      - CHATWOOT_IMPORT_DATABASE_CONNECTION_URI=postgres://postgres:i4PPAa20EqN7@postgres:5432/chatwoot
+      - CHATWOOT_IMPORT_DATABASE_PLACEHOLDER_MEDIA_MESSAGE=true
+      - AUTHENTICATION_TYPE=apikey
+      - AUTHENTICATION_API_KEY=b45db89a9f853402af79da49a518d8fe
+      - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
+      - AUTHENTICATION_JWT_EXPIRIN_IN=0
+      - AUTHENTICATION_JWT_SECRET='L=0YWt]b2w[WF>#>:&E`'
+      - LANGUAGE=pt-BR # pt-BR, en
     deploy:
       mode: replicated
       replicas: 1
@@ -75,7 +103,7 @@ services:
           memory: 2048M
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.evolution_eosbot.rule=Host(`api.eosbotdev.online`)"
+      - "traefik.http.routers.evolution_eosbot.rule=Host(`api.eosbot.com.br`)"
       - "traefik.http.routers.evolution_eosbot.entrypoints=websecure"
       - "traefik.http.routers.evolution_eosbot.tls.certresolver=cloudflare"
       - "traefik.http.routers.evolution_eosbot.priority=1"

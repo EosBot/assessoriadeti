@@ -1,0 +1,5 @@
+docker exec -it [container] bash
+rabbitmqctl add_user "evolution"
+rabbitmqctl set_user_tags evolution administrator
+rabbitmqctl set_permissions -p / evolution ".*" ".*" ".*"
+rabbitmqctl change_password evolution xv34h32m

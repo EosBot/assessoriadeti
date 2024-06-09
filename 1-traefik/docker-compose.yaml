@@ -14,8 +14,8 @@ services:
       - --api.debug=true
       - --log=true
       - --log.level=ERROR
-      - --entrypoints.websecure.http.tls.domains[0].main=eosbotdev.online # mudar para eosbot.com.br
-      - --entrypoints.websecure.http.tls.domains[0].sans=*.eosbotdev.online # mudar para eosbot.com.br
+      - --entrypoints.websecure.http.tls.domains[0].main=eosbot.com.br # mudar para eosbot.com.br
+      - --entrypoints.websecure.http.tls.domains[0].sans=*.eosbot.com.br # mudar para eosbot.com.br
       - --certificatesresolvers.cloudflare.acme.email=thalis224@hotmail.com # mudar para eosbot@outlook.com.br
       - --certificatesresolvers.cloudflare.acme.dnschallenge=true
       - --certificatesresolvers.cloudflare.acme.dnschallenge.delaybeforecheck=0
@@ -41,7 +41,7 @@ services:
       - "traefik.http.routers.http-catchall.entrypoints=web"
       - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.eosbotdev.online`)" #traefik.eosbot.com.br
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.eosbot.com.br`)" #traefik.eosbot.com.br
       - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
       - "traefik.http.routers.traefik-dashboard.service=api@internal"
       - "traefik.http.routers.traefik-dashboard.tls.certresolver=cloudflare"

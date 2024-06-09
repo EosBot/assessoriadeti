@@ -1,25 +1,36 @@
+################################################################################################
+# antes de instalar execute no terminal bash->docker config create rabbitmq-config rabbitmq.conf
+################################################################################################
 version: '3.7'
 
 services:
   rabbitmq:
     image: rabbitmq:3.8.9-alpine
-    hostname: "rabbitmq-{{.Task.Slot}}"
+    hostname: "eosbotdev-{{.Task.Slot}}"
     networks:
       - traefik
     configs:
       - source: rabbitmq-config
-        target: /etc/rabbitmq/rabbitmq.conf
+        target: /root/rabbitmq/rabbitmq.conf
     environment:
-          - RABBITMQ_ERLANG_COOKIE="SECRET_COOKIE"
-    deploy:
-      replicas: 3
+      - RABBITMQ_ERLANG_COOKIE="SUNiMakwArtWINglINGEntaneYELAYebR"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq/
+    deploy:      
+      replicas: 1
       restart_policy:
         condition: any
+    
+volumes:
+  rabbitmq_data:
+    driver: local
+    name: rabbitmq_data
 
 networks:
   traefik:
     external: true
-
+    
 configs:
   rabbitmq-config:
     external: true
+    name: rabbitmq-config
