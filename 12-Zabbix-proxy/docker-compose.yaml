@@ -4,6 +4,9 @@ services:
     image: zabbix/zabbix-proxy-sqlite3:alpine-latest
     ports:
       - "10051:10051"
+    volumes:
+     - /etc/localtime:/etc/localtime:ro
+     - /etc/timezone:/etc/timezone:ro
     networks:
       - traefik
     ulimits:
@@ -11,14 +14,6 @@ services:
      nofile:
       soft: 20000
       hard: 40000
-    deploy:
-     resources:
-      limits:
-        cpus: '0.70'
-        memory: 1G
-      reservations:
-        cpus: '0.5'
-        memory: 512M
     environment:
       ZBX_HOSTNAME: proxy-eosbot
       ZBX_PROXYMODE: '0'
@@ -53,6 +48,9 @@ services:
         limits:
           cpus: "0.5"
           memory: 1024M
+        reservations:
+          cpus: '0.5'
+          memory: 512M
           
   zabbix-agent:
     container_name: zabbix-agent
