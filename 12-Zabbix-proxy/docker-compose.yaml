@@ -6,6 +6,19 @@ services:
       - "10051:10051"
     networks:
       - traefik
+    ulimits:
+     nproc: 65535
+     nofile:
+      soft: 20000
+      hard: 40000
+    deploy:
+     resources:
+      limits:
+        cpus: '0.70'
+        memory: 1G
+      reservations:
+        cpus: '0.5'
+        memory: 512M
     environment:
       ZBX_HOSTNAME: proxy-eosbot
       ZBX_PROXYMODE: '0'
