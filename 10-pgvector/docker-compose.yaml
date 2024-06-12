@@ -1,16 +1,51 @@
 version: "3.7"
 services:
-  postgrespgvector:
-    image: astraonline/postgrespgvector:2024
-    container_name: postgrespgvector
-    environment:
-      - POSTGRES_PASSWORD=i4PPAa20EqN7
+  postgrespgvector:              
+    image: pgvector/pgvector:pg16                                                                                                                                                              
+    volumes:                                                                                                                                                                                   
+      - woofed-crm-pg-volume:/var/lib/postgresql/data                                                                                                                                              
+    environment:                                                                                                                                                                                  
+      POSTGRES_PASSWORD: i4PPAa20EqN7    
     networks:
       - traefik
-    ports:
+    ports:                                                                                                                                                                                     
       - "5436:5432"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 1024M
+          
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    depends_on:
+      - postgrespgvector
+    environment:
+      PGADMIN_DEFAULT_EMAIL: suporte@eosbot.com.br
+      PGADMIN_DEFAULT_PASSWORD: Xv34h32m@
+      PGADMIN_CONFIG_WTF_CSRF_CHECK_DEFAULT: "False"
+    networks: 
+      - traefik
+    ports:
+      - "5050:80"
+    labels:
+      - "traefik.enable=false"
+      - "traefik.http.routers.pgadmin4-http.entrypoints=web"
+      - "traefik.http.routers.pgadmin4-http.rule=Host(`pgadmin.eosbot.com.br`)"
+      - "traefik.http.routers.pgadmin4.entrypoints=websecure"
+      - "traefik.http.routers.pgadmin4.rule=Host(`pgadmin.eosbot.com.br`)"
+      - "traefik.http.routers.pgadmin4-http.middlewares=pgadmin4-https@docker"
+      - "traefik.http.middlewares.pgadmin4-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.pgadmin4.tls=true"
+      - "traefik.http.routers.pgadmin4.tls.certresolver=cloudflare"
+      - "traefik.http.services.pgadmin4.loadbalancer.server.port=80"
     volumes:
-      - postgrespgvector:/var/lib/postgresql/data
+      - pgadmin-volume:/var/lib/pgadmin
     deploy:
       mode: replicated
       replicas: 1
@@ -23,9 +58,12 @@ services:
           memory: 1024M
 
 volumes:
-  postgrespgvector:
+  woofed-crm-pg-volume:
     external: true
-    name: postgrespgvector
+    name: woofed-crm-pg-volume
+  pgadmin-volume:
+    external: true
+    name: pgadmin-volume
 
 networks:
   traefik:

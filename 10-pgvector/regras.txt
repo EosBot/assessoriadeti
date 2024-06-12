@@ -1,0 +1,4 @@
+PGADMIN CLOUFLARE CONFIG
+
+CRIE UMA REGRA PARA O BYPASS DA URL pgadmin.eosbot.com.br
+adicione no docker compose -> PGADMIN_CONFIG_WTF_CSRF_CHECK_DEFAULT: "False"

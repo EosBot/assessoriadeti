@@ -138,6 +138,8 @@ services:
         limits:
           cpus: "1"
           memory: 2048M
+      restart_policy:
+        condition: on-failure
 
 volumes:
   typebot_s3_data:

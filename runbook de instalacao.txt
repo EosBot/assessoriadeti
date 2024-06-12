@@ -40,6 +40,9 @@ Criar banco de dados postgree
 -> psql -U postgres
 -> create database n8n_queue; create database chatwoot; create database typebot; create database woofedcrm;
 ----------------------------------------------------------------------
+Dentro do container pgvector execute:
+-> CREATE EXTENSION vector;
+----------------------------------------------------------------------
 Após o deploy entrar no conteiner do GoodJob do WoofedCRM e executar:
 ->rails db:create
 ->rails db:migrate

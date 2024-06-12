@@ -9,7 +9,7 @@ version: '3.7'
 
 services:
   chatwoot_app:
-    image: 'sendingtk/chatwoot:v3.9.5'
+    image: 'sendingtk/chatwoot:latest'
     command: bundle exec rails s -p 3000 -b 0.0.0.0
     entrypoint: docker/entrypoints/rails.sh
     volumes:
@@ -75,7 +75,7 @@ services:
       - traefik.http.routers.chatwoot_app.middlewares=sslheader@docker
 
   chatwoot_sidekiq:
-    image: 'sendingtk/chatwoot:v3.9.5'
+    image: 'sendingtk/chatwoot:latest'
     container_name: chatwoot_sidekiq
     command: bundle exec sidekiq -C config/sidekiq.yml
     volumes:

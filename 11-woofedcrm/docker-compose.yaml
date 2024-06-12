@@ -11,7 +11,7 @@ services:
     volumes:
       - woofedcrm_data:/app
     environment:
-      - ENABLE_USER_SIGNUP=true
+      - ENABLE_USER_SIGNUP=false
       - RAILS_ENV=production
       - RACK_ENV=production
       - NODE_ENV=production
@@ -55,7 +55,7 @@ services:
     volumes:
       - woofedcrm_data:/app
     environment:
-      - ENABLE_USER_SIGNUP=true
+      - ENABLE_USER_SIGNUP=false
       - RAILS_ENV=production
       - RACK_ENV=production
       - NODE_ENV=production
@@ -88,7 +88,7 @@ services:
     volumes:
       - woofedcrm_data:/app
     environment:
-      - ENABLE_USER_SIGNUP=true
+      - ENABLE_USER_SIGNUP=false
       - RAILS_ENV=production
       - RACK_ENV=production
       - NODE_ENV=production
