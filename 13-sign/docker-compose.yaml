@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  documenso:
+    image: documenso/documenso:latest
+    environment:
+      - NEXTAUTH_URL=https://sign.eosbot.com.br
+      - NEXTAUTH_SECRET=06b3effed203fb401c58f87308889a80
+      - NEXT_PRIVATE_ENCRYPTION_KEY=LpcAHiFPUAT14gLSiu5ghchZH4PFAB2g
+      - NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY=CVQKJCp7utRE9YdixU2m9RElWpz5DEs5
+      - NEXT_PRIVATE_GOOGLE_CLIENT_ID=
+      - NEXT_PRIVATE_GOOGLE_CLIENT_SECRET=
+      - NEXT_PRIVATE_OIDC_WELL_KNOWN=
+      - NEXT_PRIVATE_OIDC_CLIENT_ID=
+      - NEXT_PRIVATE_OIDC_CLIENT_SECRET=
+      - NEXT_PUBLIC_WEBAPP_URL=https://sign.eosbot.com.br
+      - NEXT_PUBLIC_MARKETING_URL=https://6sides.com.br
+      - NEXT_PRIVATE_DATABASE_URL=postgres://postgres:i4PPAa20EqN7@postgres:5432/documenso?sslmode=disable
+      - NEXT_PRIVATE_DIRECT_DATABASE_URL=postgres://postgres:i4PPAa20EqN7@postgres:5432/documenso?sslmode=disable
+      - NEXT_PRIVATE_SIGNING_TRANSPORT=local
+      - NEXT_PRIVATE_SIGNING_PASSPHRASE=
+      - NEXT_PRIVATE_SIGNING_LOCAL_FILE_PATH=
+      - NEXT_PRIVATE_SIGNING_LOCAL_FILE_CONTENTS=
+      - NEXT_PRIVATE_SIGNING_GCLOUD_HSM_KEY_PATH=
+      - NEXT_PRIVATE_SIGNING_GCLOUD_HSM_PUBLIC_CRT_FILE_PATH=
+      - NEXT_PRIVATE_SIGNING_GCLOUD_HSM_PUBLIC_CRT_FILE_CONTENTS=
+      - NEXT_PRIVATE_SIGNING_GCLOUD_APPLICATION_CREDENTIALS_CONTENTS=
+      - NEXT_PUBLIC_UPLOAD_TRANSPORT=database
+      - NEXT_PRIVATE_UPLOAD_ENDPOINT=https://storage.eosbot.com.br
+      - NEXT_PRIVATE_UPLOAD_FORCE_PATH_STYLE=false
+      - NEXT_PRIVATE_UPLOAD_REGION=brazil
+      - NEXT_PRIVATE_UPLOAD_BUCKET=documenso
+      - NEXT_PRIVATE_UPLOAD_ACCESS_KEY_ID=X42YLKLIXI2U0RXWWFJH
+      - NEXT_PRIVATE_UPLOAD_SECRET_ACCESS_KEY=l9zbNI6LVvlXBTn8m8Rg15BQUSCftQK1kE6ZGJeW
+      - NEXT_PRIVATE_SMTP_TRANSPORT=smtp-auth
+      - NEXT_PRIVATE_SMTP_HOST=smtp.hostinger.com
+      - NEXT_PRIVATE_SMTP_PORT=465
+      - NEXT_PRIVATE_SMTP_USERNAME=suporte@eosbot.com.br
+      - NEXT_PRIVATE_SMTP_PASSWORD=Xv34h32m@
+      - NEXT_PRIVATE_SMTP_APIKEY_USER=
+      - NEXT_PRIVATE_SMTP_APIKEY=
+      - NEXT_PRIVATE_SMTP_SECURE=
+      - NEXT_PRIVATE_SMTP_FROM_NAME=EosBot
+      - NEXT_PRIVATE_SMTP_FROM_ADDRESS=suporte@eosbot.com.br
+      - NEXT_PRIVATE_RESEND_API_KEY=
+      - NEXT_PRIVATE_MAILCHANNELS_API_KEY=
+      - NEXT_PRIVATE_MAILCHANNELS_ENDPOINT=
+      - NEXT_PRIVATE_MAILCHANNELS_DKIM_DOMAIN=
+      - NEXT_PRIVATE_MAILCHANNELS_DKIM_SELECTOR=
+      - NEXT_PRIVATE_MAILCHANNELS_DKIM_PRIVATE_KEY=
+      - NEXT_PUBLIC_DOCUMENT_SIZE_UPLOAD_LIMIT=5
+      - NEXT_PRIVATE_STRIPE_API_KEY=
+      - NEXT_PRIVATE_STRIPE_WEBHOOK_SECRET=
+      - NEXT_PUBLIC_STRIPE_COMMUNITY_PLAN_MONTHLY_PRICE_ID=
+      - NEXT_PUBLIC_STRIPE_ENTERPRISE_PLAN_MONTHLY_PRICE_ID=
+      - NEXT_PRIVATE_JOBS_PROVIDER=local
+      - NEXT_PRIVATE_TRIGGER_API_KEY=
+      - NEXT_PRIVATE_TRIGGER_API_URL=
+      - NEXT_PRIVATE_INNGEST_EVENT_KEY=
+      - NEXT_PUBLIC_POSTHOG_KEY=
+      - NEXT_PUBLIC_FEATURE_BILLING_ENABLED=false
+      - NEXT_PUBLIC_DISABLE_SIGNUP=true
+      - E2E_TEST_AUTHENTICATE_USERNAME=Test User
+      - E2E_TEST_AUTHENTICATE_USER_EMAIL=testuser@mail.com
+      - E2E_TEST_AUTHENTICATE_USER_PASSWORD=test_Password123
+      - NEXT_PRIVATE_REDIS_URL=redis://redis:6379
+      - NEXT_PRIVATE_REDIS_TOKEN=
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.documenso.rule=Host(`sign.eosbot.com.br`)"
+      - "traefik.http.routers.documenso.entrypoints=websecure"
+      - "traefik.http.routers.documenso.tls.certresolver=cloudflare"
+      - "traefik.http.routers.documenso.priority=1"
+      - "traefik.http.routers.documenso.service=documenso"
+      - "traefik.http.services.documenso.loadbalancer.server.port=3000"
+      - "traefik.http.services.documenso.loadbalancer.passhostheader=true" 
+      - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.documenso.middlewares=sslheader@docker"
+    networks:
+      - traefik
+    ports:
+      - "3000:3000"
+    volumes:
+      - type: volume
+        source: documenso_data
+        target: /opt/documenso/cert.p12
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2048M
+
+networks:
+  traefik:
+    external: true
+
+volumes:
+  documenso_data:
+    external: true
+    name: documenso_data

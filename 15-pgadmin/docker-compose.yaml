@@ -1,0 +1,49 @@
+version: "3.7"
+services:
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=suporte@eosbot.com.br
+      - PGADMIN_DEFAULT_PASSWORD=Xv34h32m@
+      - PGADMIN_LISTEN_ADDRESS=0.0.0.0
+      - PGADMIN_DISABLE_POSTFIX=true
+      - PGADMIN_ENABLE_TLS=true
+      - PGADMIN_LISTEN_PORT=443
+    networks:
+      - traefik
+    ports:
+      - "80"
+      - "443"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.pgadmin.rule=Host(`pgadmin.eosbot.com.br`)
+      - traefik.http.routers.pgadmin.entrypoints=websecure
+      - traefik.http.routers.pgadmin.tls.certresolver=cloudflare
+      - traefik.http.routers.pgadmin.priority=1
+      - traefik.http.routers.pgadmin.service=pgadmin
+      - traefik.http.services.pgadmin.loadbalancer.server.port=443
+      - traefik.http.services.pgadmin.loadbalancer.passhostheader=true
+      - traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.routers.pgadmin.middlewares=sslheader@docker
+    volumes:
+      - pgadmin-volume:/var/lib/pgadmin
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 1024M
+
+volumes:
+  pgadmin-volume:
+    external: true
+    name: pgadmin-volume
+
+networks:
+  traefik:
+    name: traefik
+    external: true

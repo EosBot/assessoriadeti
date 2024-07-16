@@ -124,6 +124,8 @@ services:
       /usr/bin/mc anonymous set public minio/typebot/public;
       /usr/bin/mc mb minio/chatwoot;
       /usr/bin/mc anonymous set public minio/chatwoot/public;
+      /usr/bin/mc mb minio/documenso;
+      /usr/bin/mc anonymous set public minio/documenso/public;
       exit 0;
       "
     networks:

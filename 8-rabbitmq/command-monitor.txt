@@ -1,0 +1,3 @@
+in rabbitmq container
+
+rabbitmq-plugins enable rabbitmq_management

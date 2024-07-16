@@ -1,0 +1,269 @@
+version: '3.8'
+
+volumes:
+  zammad-postgres:
+    external: true
+    name: zammad-postgres
+  redis-data:
+    external: true
+    name: redis-data
+  zammad-backup:
+    external: true
+    name: zammad-backup
+  zammad-storage:
+    external: true
+    name: zammad-storage
+  zammad-script:
+    external: true
+    name: zammad-script
+  elasticsearch-data:
+    external: true
+    name: elasticsearch-data
+
+networks:
+  zammad-network:
+    external: true
+    name: zammad-network
+  traefik:
+    external: true
+    name: traefik
+
+services:
+  postgres:
+    image: postgres:15.6-alpine
+    command: postgres -c 'max_connections=50'
+    volumes:
+      - zammad-postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: zammaddb
+      POSTGRES_USER: zammaddbuser
+      POSTGRES_PASSWORD: PtNneCEtAWrFkYeRmFvwLgA
+    networks:
+      - zammad-network
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "zammaddb", "-U", "zammaddbuser" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  redis:
+    image: redis:7.0
+    volumes:
+      - redis-data:/data
+    networks:
+      - zammad-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  elasticsearch:
+    image: bitnami/elasticsearch:8.12.2
+    volumes:
+      - elasticsearch-data:/bitnami/elasticsearch/data
+    networks:
+      - zammad-network
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  memcached:
+    command: memcached -m 256M
+    image: memcached:1.6.25-alpine
+    networks:
+      - zammad-network
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  init:
+    image: ghcr.io/zammad/zammad:6.3.0
+    command: ["zammad-init"]
+    user: 0:0
+    volumes:
+      - zammad-storage:/opt/zammad/storage
+    environment:
+      POSTGRESQL_DB: zammaddb
+      POSTGRESQL_HOST: postgres
+      POSTGRESQL_USER: zammaddbuser
+      POSTGRESQL_PASS: PtNneCEtAWrFkYeRmFvwLgA
+      POSTGRESQL_PORT: 5432
+      POSTGRESQL_OPTIONS: ?pool=50
+      MEMCACHE_SERVERS: memcached:11211
+      REDIS_URL: redis://redis:6379
+    networks:
+      - zammad-network
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    depends_on:
+      - postgres
+
+  zammad:
+    image: ghcr.io/zammad/zammad:6.3.0
+    command: ["zammad-nginx"]
+    environment:
+      NGINX_PORT: 8080
+      ZAMMAD_RAILSSERVER_HOST: railsserver
+      ZAMMAD_RAILSSERVER_PORT: 3000
+      ZAMMAD_WEBSOCKET_HOST: websocket
+      ZAMMAD_WEBSOCKET_PORT: 6042
+      RAILS_TRUSTED_PROXIES: '127.0.0.1, ::1, traefik'
+      NGINX_SERVER_SCHEME: https
+      POSTGRESQL_DB: zammaddb
+      POSTGRESQL_HOST: postgres
+      POSTGRESQL_USER: zammaddbuser
+      POSTGRESQL_PASS: PtNneCEtAWrFkYeRmFvwLgA
+      POSTGRESQL_PORT: 5432
+      MEMCACHE_SERVERS: memcached:11211
+      REDIS_URL: redis://redis:6379
+    networks:
+      - zammad-network
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.zammad.rule=Host(`ticket.eosbot.com.br`)"
+      - "traefik.http.routers.zammad.service=zammad"
+      - "traefik.http.routers.zammad.entrypoints=websecure"
+      - "traefik.http.services.zammad.loadbalancer.server.port=8080"
+      - "traefik.http.routers.zammad.tls=true"
+      - "traefik.http.routers.zammad.tls.certresolver=cloudflare"
+      - "traefik.http.services.zammad.loadbalancer.passhostheader=true"
+      - "traefik.docker.network=traefik"
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    depends_on:
+      - railsserver
+
+  railsserver:
+    image: ghcr.io/zammad/zammad:6.3.0
+    command: ["zammad-railsserver"]
+    environment:
+      POSTGRESQL_DB: zammaddb
+      POSTGRESQL_HOST: postgres
+      POSTGRESQL_USER: zammaddbuser
+      POSTGRESQL_PASS: PtNneCEtAWrFkYeRmFvwLgA
+      POSTGRESQL_PORT: 5432
+      POSTGRESQL_OPTIONS: ?pool=50
+      MEMCACHE_SERVERS: memcached:11211
+      REDIS_URL: redis://redis:6379
+    networks:
+      - zammad-network
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    depends_on:
+      - memcached
+      - postgres
+      - redis
+
+  scheduler:
+    image: ghcr.io/zammad/zammad:6.3.0
+    command: ["zammad-scheduler"]
+    environment:
+      POSTGRESQL_DB: zammaddb
+      POSTGRESQL_HOST: postgres
+      POSTGRESQL_USER: zammaddbuser
+      POSTGRESQL_PASS: PtNneCEtAWrFkYeRmFvwLgA
+      POSTGRESQL_PORT: 5432
+      POSTGRESQL_OPTIONS: ?pool=50
+      MEMCACHE_SERVERS: memcached:11211
+      REDIS_URL: redis://redis:6379
+    networks:
+      - zammad-network
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    depends_on:
+      - memcached
+      - railsserver
+      - redis
+
+  websocket:
+    image: ghcr.io/zammad/zammad:6.3.0
+    command: ["zammad-websocket"]
+    environment:
+      POSTGRESQL_DB: zammaddb
+      POSTGRESQL_HOST: postgres
+      POSTGRESQL_USER: zammaddbuser
+      POSTGRESQL_PASS: PtNneCEtAWrFkYeRmFvwLgA
+      POSTGRESQL_PORT: 5432
+      POSTGRESQL_OPTIONS: ?pool=50
+      MEMCACHE_SERVERS: memcached:11211
+      REDIS_URL: redis://redis:6379
+    networks:
+      - zammad-network
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.zammad-websocket.rule=Host(`ticket.eosbot.com.br`)"
+      - "traefik.http.routers.zammad-websocket.entrypoints=websecure"
+      - "traefik.http.services.zammad-websocket.loadbalancer.server.port=6042"
+      - "traefik.http.routers.zammad-websocket.tls=true"
+      - "traefik.http.routers.zammad-websocket.tls.certresolver=cloudflare"
+      - "traefik.http.services.zammad-websocket.loadbalancer.passhostheader=true"
+      - "traefik.docker.network=traefik"
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    depends_on:
+      - memcached
+      - railsserver
+      - redis
+
+  backup:
+    image: postgres:15.6-alpine
+    entrypoint: ["sh", "-c", "/usr/local/bin/backup.sh"]
+    command: ["zammad-backup"]
+    volumes:
+      - zammad-backup:/var/tmp/zammad
+      - zammad-storage:/opt/zammad/storage:ro
+      - /usr/local/bin/backup.sh:/usr/local/bin/backup.sh:ro
+    environment:
+      POSTGRESQL_DB: zammaddb
+      POSTGRESQL_HOST: postgres
+      POSTGRESQL_USER: zammaddbuser
+      POSTGRESQL_PASS: PtNneCEtAWrFkYeRmFvwLgA
+      POSTGRESQL_PORT: 5432
+      POSTGRESQL_OPTIONS: ?pool=50
+      MEMCACHE_SERVERS: memcached:11211
+      REDIS_URL: redis://redis:6379
+      BACKUP_TIME: 03:00
+      HOLD_DAYS: 10
+      TZ: America/Sao_Paulo
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    depends_on:
+      - railsserver
+      - postgres

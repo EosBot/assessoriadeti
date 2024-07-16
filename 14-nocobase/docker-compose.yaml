@@ -1,0 +1,61 @@
+version: "3.8"
+services:
+  app:
+    image: nocobase/nocobase:latest
+    networks:
+      - traefik
+    depends_on:
+      - mysql
+    environment:
+      - APP_KEY=GiX9BSFvzmF2I57lhdTDzMosHYOm3gmlmT5rAYL1g4KvRuI3p0q849fWQcUTLtlS
+      - DB_DIALECT=mysql
+      - DB_HOST=mysql
+      - DB_DATABASE=nocobase
+      - DB_USER=root
+      - DB_PASSWORD=CoLdiStrAIRt
+      - DB_TIMEZONE=-03:00
+      - DB_UNDERSCORED=true
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.nocobase.rule=Host(`nocobase.eosbot.com.br`)
+      - traefik.http.services.nocobase.loadbalancer.server.port=80
+      - traefik.http.routers.nocobase.service=nocobase
+      - traefik.http.routers.nocobase.tls.certresolver=cloudflare
+      - traefik.http.routers.nocobase.entrypoints=websecure
+      - traefik.http.routers.nocobase.tls=true    
+    volumes:
+      - nocobase_storage:/app/nocobase/storage
+    ports:
+      - "80"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+
+  mysql:
+    image: mysql:8
+    environment:
+      - MYSQL_DATABASE=nocobase
+      - MYSQL_USER=nocobase
+      - MYSQL_PASSWORD=CoLdiStrAIRt
+      - MYSQL_ROOT_PASSWORD=CoLdiStrAIRt
+    volumes:
+      - mysql_storage:/var/lib/mysql
+    networks:
+      - traefik
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+
+volumes:
+  nocobase_storage:
+    external: true
+    name: nocobase_storage
+  mysql_storage:
+    external: true
+    name: mysql_storage
+    
+networks:
+  traefik:
+    external: true
