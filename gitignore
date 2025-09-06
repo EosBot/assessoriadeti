@@ -1,22 +1,17 @@
-# Created by https://www.toptal.com/developers/gitignore/api/git,visualstudiocode
-# Edit at https://www.toptal.com/developers/gitignore?templates=git,visualstudiocode
+# Git backups e artefatos de merge
 
-### Git ###
-# Created by git for backups. To disable backups in Git:
-# $ git config --global mergetool.keepBackup false
 *.orig
-
-# Created by git when using merge tools for conflicts
 *.BACKUP.*
 *.BASE.*
 *.LOCAL.*
 *.REMOTE.*
-*_BACKUP_*.txt
-*_BASE_*.txt
-*_LOCAL_*.txt
-*_REMOTE_*.txt
+*BACKUP*.txt
+*BASE*.txt
+*LOCAL*.txt
+*REMOTE*.txt
 
-### VisualStudioCode ###
+# Visual Studio Code
+
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -24,15 +19,86 @@
 !.vscode/extensions.json
 !.vscode/*.code-snippets
 
-# Local History for Visual Studio Code
-.history/
+# Histórico local
 
-# Built Visual Studio Code Extensions
+.history/
+.ionide/
+
+# Extensões VS Code compiladas
+
 *.vsix
 
-### VisualStudioCode Patch ###
-# Ignore all local history of files
-.history
-.ionide
+# Chaves SSH e credenciais sensíveis (NUNCA versionar)
 
-# End of https://www.toptal.com/developers/gitignore/api/git,visualstudiocode
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+*.pem
+*.key
+*.crt
+*.pfx
+
+# Obs: `*.pub` geralmente PODE ser versionado (são chaves públicas) mas está listado por precaução
+
+# Arquivos de sistema
+
+# macOS
+
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+
+*~
+
+# Logs e arquivos temporários
+
+*.log
+*.tmp
+*.swp
+*.swo
+*.bak
+*.pid
+*.seed
+
+# Segredos e variáveis de ambiente
+
+.env
+.env.local
+.env.*.local
+.secret
+secrets.*
+credentials.json
+*.token
+*.auth
+
+# Arquivos de build comuns (Python / Node / etc.)
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+node_modules/
+dist/
+build/
+coverage/
+.cache/
+.mypy_cache/
+pytest_cache/
+.next/
+out/
+
+# Outros editores / IDEs
+
+*.sublime-workspace
+*.sublime-project
+.idea/
+*.iml

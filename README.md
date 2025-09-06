@@ -1,133 +1,171 @@
+```markdown
+# 📝 RUNBOOK DE INSTALAÇÃO
 
-# 6 Sides Tech
+## 🔒 1. Atualizações e Hardening Básico  
+Antes de instalar qualquer coisa, garanta que seu sistema esteja atualizado:  
 
-## Projeto de Assessoria de TI com Softwares Open Source
+```sh
+sudo apt update && sudo apt upgrade -y
+sudo apt install unattended-upgrades fail2ban ufw apparmor apparmor-profiles apparmor-utils -y
+```
 
-### Visão Geral
-Este projeto é uma solução de assessoria de TI que utiliza softwares open source para criar uma infraestrutura robusta e escalável em uma Virtual Private Server (VPS). Os softwares principais incluem Typebot, Chatwoot, n8n, Traefik e Portainer. Essa configuração oferece um conjunto abrangente de ferramentas para gerenciar comunicação, automação de fluxo de trabalho, gerenciamento de contêineres e monitoramento da infraestrutura.
+---
 
-### Softwares Utilizados
-1. **Typebot**: Plataforma de chatbot open source que permite criar e gerenciar bots de conversação para diversos propósitos, incluindo suporte ao cliente e geração de leads.
-2. **Chatwoot**: Plataforma de atendimento ao cliente de código aberto, que oferece recursos de chat ao vivo, automação de mensagens e gerenciamento centralizado de conversas de clientes.
-3. **n8n**: Plataforma de automação de fluxo de trabalho que permite integrar serviços online, APIs e ferramentas de forma visual e fácil, sem a necessidade de escrever código.
-4. **Traefik**: Roteador de borda open source e um balanceador de carga reverso que ajuda a implementar serviços de rede de forma eficiente e segura, com suporte a configuração dinâmica.
-5. **Portainer**: Interface de usuário simples e intuitiva para gerenciar contêineres Docker em um ambiente Docker Swarm ou Kubernetes.
-6. **pgvector**: Extensão para PostgreSQL para suporte a operações de vetor, especialmente útil em machine learning e similaridade de pesquisa.
-7. **WoofedCRM**: Sistema de gerenciamento de relacionamento com o cliente customizado.
-8. **Zabbix Proxy**: Proxy para Zabbix, uma plataforma de monitoramento open source.
-9. **Sign**: Serviço para assinatura digital.
-10. **NocoBase**: Plataforma de gerenciamento de dados sem código.
-11. **pgAdmin**: Ferramenta de administração e desenvolvimento open source para PostgreSQL.
-12. **Zammad**: Sistema de tickets open source para suporte técnico e helpdesk.
-13. **PostgreSQL**: Sistema de gerenciamento de banco de dados objeto-relacional.
-14. **MongoDB**: Banco de dados NoSQL orientado a documentos.
-15. **Redis**: Armazenamento de estrutura de dados em memória, utilizado como banco de dados, cache e broker de mensagens.
-16. **RabbitMQ**: Broker de mensagens open source.
-17. **EvolutionAPI**: API customizada para integração do whatsapp.
+## 🚀 2. Firewall e Controle de Tráfego  
+UFW (Uncomplicated Firewall) – para gerenciar regras de firewall:  
 
-## Estrutura do Projeto
-O projeto está organizado em vários diretórios, cada um contendo um arquivo `docker-compose.yaml` para a configuração dos serviços Docker correspondentes. Aqui estão os principais diretórios e seus conteúdos:
+```sh
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow ssh
+sudo ufw enable
+```
 
-- **1-traefik**
-  - `docker-compose.yaml`: Configuração do Traefik.
+---
 
-- **10-pgvector**
-  - `docker-compose.yaml`: Configuração do pgvector.
-  - `regras.txt`: Regras específicas para o pgvector.
+## 🛡️ 3. AppArmor – Controle de Acesso a Aplicações  
+O AppArmor já vem instalado no Ubuntu, mas pode ser reforçado com perfis adicionais:  
 
-- **11-woofedcrm**
-  - `docker-compose.yaml`: Configuração do WoofedCRM.
+```sh
+sudo apt install apparmor apparmor-profiles apparmor-utils -y
+sudo aa-enforce /etc/apparmor.d/*
+```
 
-- **12-Zabbix-proxy**
-  - `docker-compose.yaml`: Configuração do Zabbix Proxy.
-  - `zabbix-message-whatsapp-evolution.yaml`: Configuração para mensagens WhatsApp no Zabbix.
+---
 
-- **13-sign**
-  - `docker-compose.yaml`: Configuração do serviço Sign.
+## 🔐 4. Fail2Ban – Proteção contra Ataques de Força Bruta  
+Instale e configure o Fail2Ban para bloquear IPs suspeitos:  
 
-- **14-nocobase**
-  - `docker-compose.yaml`: Configuração do Nocobase.
+```sh
+sudo apt install fail2ban -y
+sudo systemctl enable --now fail2ban
+```
 
-- **15-pgadmin**
-  - `docker-compose.yaml`: Configuração do pgAdmin.
+---
 
-- **16-zammad**
-  - `docker-compose.yaml`: Configuração do Zammad.
-  - `backup.sh`: Script de backup para o Zammad.
-  - `github.txt`: Instruções relacionadas ao GitHub para o Zammad.
+## 📦 5. Segurança de Login e Senhas  
+Use SSH com autenticação por chave e desative login por senha:  
 
-- **2-portainer**
-  - `docker-compose.yaml`: Configuração do Portainer.
+```sh
+sudo nano /etc/ssh/sshd_config
+# Edite as seguintes linhas:
+# PasswordAuthentication no
+# PermitRootLogin no
 
-- **3-postgres**
-  - `docker-compose.yaml`: Configuração do PostgreSQL.
+sudo systemctl restart ssh
+sudo apt install libpam-google-authenticator -y
+google-authenticator
+```
 
-- **4-mongodb**
-  - `docker-compose.yaml`: Configuração do MongoDB.
+---
 
-- **5-Typebot**
-  - `docker-compose.yml`: Configuração do Typebot.
+## 🔍 6. Monitoramento e IDS (Intrusion Detection System)  
 
-- **5-redis**
-  - `docker-compose.yaml`: Configuração do Redis.
+**Chkrootkit** – Verifica rootkits conhecidos:  
 
-- **6-chatwoot**
-  - `docker-compose.yaml`: Configuração do Chatwoot.
+```sh
+sudo apt install chkrootkit -y
+sudo chkrootkit
+```
 
-- **7-n8n**
-  - `docker-compose.yaml`: Configuração do n8n.
+**RKHunter** – Outra ferramenta para detectar rootkits:  
 
-- **8-rabbitmq**
-  - `docker-compose.yml`: Configuração do RabbitMQ.
-  - `command-monitor.txt`: Comandos de monitoramento.
-  - `commmands-bash.txt`: Comandos Bash para RabbitMQ.
-  - `create-user.txt`: Instruções para criar usuários no RabbitMQ.
-  - `rabbitmq.conf`: Arquivo de configuração do RabbitMQ.
+```sh
+sudo apt install rkhunter -y
+sudo rkhunter --update
+sudo rkhunter --check
+```
 
-- **9-evolutionapi**
-  - `.env`: Arquivo de configuração de ambiente para o Evolution API.
-  - `docker-compose.yaml`: Configuração do Evolution API.
+**Auditd** – Registra eventos críticos do sistema:  
 
-## Passos de Instalação
+```sh
+sudo apt install auditd -y
+sudo systemctl enable --now auditd
+```
 
-### Instalação do Docker
-1. Atualize e instale o Docker:
-   ```bash
-   sudo apt-get update
-   sudo apt-get install -y apparmor-utils
-   curl -fsSL https://get.docker.com | bash
-   ```
-2. Inicialize o Docker Swarm:
-   ```bash
-   docker swarm init
-   docker network create --driver=overlay traefik
-   ```
+---
 
-### Instalação do Traefik
-1. Crie um diretório para o Traefik e adicione o arquivo `docker-compose.yaml`.
-2. Implante o stack do Traefik:
-   ```bash
-   docker stack deploy --prune --resolve-image always --detach=false -c docker-compose.yaml traefik
-   ```
+## 🏗️ 7. Outros Hardening e Melhorias  
 
-### Instalação do Portainer
-1. Crie um diretório para o Portainer e adicione o arquivo `docker-compose.yaml`.
-2. Implante o stack do Portainer:
-   ```bash
-   docker stack deploy --prune --resolve-image always --detach=false -c docker-compose.yaml portainer
-   ```
+### ModSecurity (se estiver rodando Apache ou Nginx)  
 
-### Criação de Bancos de Dados PostgreSQL
-1. Crie os bancos de dados necessários dentro do PostgreSQL:
-   ```sql
-   create database n8n_queue;
-   create database chatwoot;
-   create database typebot;
-   create database woofedcrm;
-   ```
+```sh
+sudo apt install libapache2-mod-security2 -y  # Para Apache
+sudo apt install modsecurity-crs -y  # Regras básicas para ModSecurity
+```
 
-### Execução dos Contêineres
-1. Em cada diretório correspondente ao serviço, execute:
-   ```bash
-   docker-compose up -d
-   ```
+### ClamAV (Antivírus open-source)  
+
+```sh
+sudo apt install clamav clamav-daemon -y
+sudo systemctl enable --now clamav-daemon
+```
+
+### Lynis (Ferramenta de Auditoria de Segurança)  
+
+```sh
+sudo apt install lynis -y
+sudo lynis audit system
+```
+
+---
+
+## 🐳 8. Instalar Docker  
+
+Remova pacotes antigos do Docker:  
+
+```sh
+for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
+```
+
+Adicione a chave GPG oficial do Docker:  
+
+```sh
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+```
+
+```
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+Adicione o repositório do Docker ao Apt sources:  
+
+```sh
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+```
+
+---
+
+## 🛠️ 9. Docker Swarm  
+
+Inicialize o Swarm:  
+
+```sh
+docker swarm init --advertise-addr $(hostname -I | awk '{print $1}')
+```
+
+Obtenha o token de ingresso para os workers:  
+
+```sh
+docker swarm join-token worker
+```
+
+Crie uma rede overlay para o Traefik:  
+
+```sh
+docker network create --driver=overlay traefik
+```
+
+```sh
+docker stack deploy -c docker-compose.yml --detach=false 
+```
+
+```
