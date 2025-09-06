@@ -1,67 +1,171 @@
-#####################################################################
-#Docker Chatwoot - https://hub.docker.com/r/sendingtk/chatwoot
-#Docker Evolution - https://hub.docker.com/r/atendai/evolution-api
-#Docker WoofedCRM - https://hub.docker.com/r/douglara/woofedcrm/tags
-#Link Zoho Email -  https://www.zoho.com/pt-br/signup.html
-#Link Favicon: - https://realfavicongenerator.net/
-#####################################################################
+```markdown
+# 📝 RUNBOOK DE INSTALAÇÃO
 
-#####################################################################
-# Opcional para proximas versões do chatwoot:
-# Docker Evolution Nestor - https://hub.docker.com/r/sendingtk/evolution-api/tags
-# Gerador de Key https://codebeautify.org/generate-random-hexadecimal-numbers
-#####################################################################
+## 🔒 1. Atualizações e Hardening Básico  
+Antes de instalar qualquer coisa, garanta que seu sistema esteja atualizado:  
 
+```sh
+sudo apt update && sudo apt upgrade -y
+sudo apt install unattended-upgrades fail2ban ufw apparmor apparmor-profiles apparmor-utils -y
+```
 
-Instalação Docker
-----------------------------------------------------------------------
--> sudo apt-get update ; apt-get install -y apparmor-utils
+---
 
--> hostnamectl set-hostname eosbot.com.br
+## 🚀 2. Firewall e Controle de Tráfego  
+UFW (Uncomplicated Firewall) – para gerenciar regras de firewall:  
 
-Altere localhost em ->nano /etc/hosts para <127.0.0.1 eosbot.com.br>
+```sh
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow ssh
+sudo ufw enable
+```
 
--> curl -fsSL https://get.docker.com | bash
--> docker swarm init
--> docker network create --driver=overlay traefik
-----------------------------------------------------------------------
-Instalar Traefik
+---
 
--> mkdir traefik
--> nano docker-compose.yaml
--> docker stack deploy --prune --resolve-image always --detach=false -c docker-compose.yaml traefik
-----------------------------------------------------------------------
-Instalação portainer
--> mkdir portainer
--> nano docker-compose.yaml
--> docker stack deploy --prune --resolve-image always --detach=false -c docker-compose.yaml portainer
-----------------------------------------------------------------------
-Criar banco de dados postgree
--> psql -U postgres
--> create database n8n_queue; create database chatwoot; create database typebot; create database woofedcrm;
-----------------------------------------------------------------------
-Dentro do container pgvector execute:
--> CREATE EXTENSION vector;
-----------------------------------------------------------------------
-Após o deploy entrar no conteiner do GoodJob do WoofedCRM e executar:
-->rails db:create
-->rails db:migrate
-->rails db:seed #somente em ambiente de teste!
-*Caso Woffedcrm apresente erro: Apos reiniciar os conteineres do WoofedCRM. Acesse o conteiner do goodjob e execute:
--> rm /app/tmp/pids/server.pid
-----------------------------------------------------------------------
-Criador de Empresa(Em processo no N8N)
+## 🛡️ 3. AppArmor – Controle de Acesso a Aplicações  
+O AppArmor já vem instalado no Ubuntu, mas pode ser reforçado com perfis adicionais:  
 
-Tema Criador de Empresa:
+```sh
+sudo apt install apparmor apparmor-profiles apparmor-utils -y
+sudo aa-enforce /etc/apparmor.d/*
+```
 
-Nome Usuario Administrador: nome
-Nome da Empresa: empresa
-Email: email@email.com
-Senha: senha
+---
 
+## 🔐 4. Fail2Ban – Proteção contra Ataques de Força Bruta  
+Instale e configure o Fail2Ban para bloquear IPs suspeitos:  
 
+```sh
+sudo apt install fail2ban -y
+sudo systemctl enable --now fail2ban
+```
 
+---
 
+## 📦 5. Segurança de Login e Senhas  
+Use SSH com autenticação por chave e desative login por senha:  
 
+```sh
+sudo nano /etc/ssh/sshd_config
+# Edite as seguintes linhas:
+# PasswordAuthentication no
+# PermitRootLogin no
 
+sudo systemctl restart ssh
+sudo apt install libpam-google-authenticator -y
+google-authenticator
+```
 
+---
+
+## 🔍 6. Monitoramento e IDS (Intrusion Detection System)  
+
+**Chkrootkit** – Verifica rootkits conhecidos:  
+
+```sh
+sudo apt install chkrootkit -y
+sudo chkrootkit
+```
+
+**RKHunter** – Outra ferramenta para detectar rootkits:  
+
+```sh
+sudo apt install rkhunter -y
+sudo rkhunter --update
+sudo rkhunter --check
+```
+
+**Auditd** – Registra eventos críticos do sistema:  
+
+```sh
+sudo apt install auditd -y
+sudo systemctl enable --now auditd
+```
+
+---
+
+## 🏗️ 7. Outros Hardening e Melhorias  
+
+### ModSecurity (se estiver rodando Apache ou Nginx)  
+
+```sh
+sudo apt install libapache2-mod-security2 -y  # Para Apache
+sudo apt install modsecurity-crs -y  # Regras básicas para ModSecurity
+```
+
+### ClamAV (Antivírus open-source)  
+
+```sh
+sudo apt install clamav clamav-daemon -y
+sudo systemctl enable --now clamav-daemon
+```
+
+### Lynis (Ferramenta de Auditoria de Segurança)  
+
+```sh
+sudo apt install lynis -y
+sudo lynis audit system
+```
+
+---
+
+## 🐳 8. Instalar Docker  
+
+Remova pacotes antigos do Docker:  
+
+```sh
+for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
+```
+
+Adicione a chave GPG oficial do Docker:  
+
+```sh
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+```
+
+```
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+Adicione o repositório do Docker ao Apt sources:  
+
+```sh
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+```
+
+---
+
+## 🛠️ 9. Docker Swarm  
+
+Inicialize o Swarm:  
+
+```sh
+docker swarm init --advertise-addr $(hostname -I | awk '{print $1}')
+```
+
+Obtenha o token de ingresso para os workers:  
+
+```sh
+docker swarm join-token worker
+```
+
+Crie uma rede overlay para o Traefik:  
+
+```sh
+docker network create --driver=overlay traefik
+```
+
+```sh
+docker stack deploy -c docker-compose.yml --detach=false 
+```
+
+```
